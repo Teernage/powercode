@@ -1,23 +1,14 @@
-/*
- * @Author: Teernage 2644545276@qq.com
- * @Date: 2026-07-12 18:46:27
- * @LastEditors: Teernage 2644545276@qq.com
- * @LastEditTime: 2026-07-12 22:38:06
- * @FilePath: /harness工程/powercode/src/main.ts
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
-import { ChatClient } from "./chat.js";
-import { loadConfig } from "./config.js";
+import { ChatClient } from './chat.js';
+import { loadConfig } from './config.js';
+import { readFileTool } from './readFile.js';
 
 /**
- * 从命令行参数中提取用户问题
- *
- * @param args 命令行参数数组
- * @returns 用户的问题或指令
- * @throws 当 -prompt 参数缺失或后面为空时抛出错误
+ *  从命令行参数中获取用户的问题
+ * @param args 命令行参数
+ * @returns 用户的问题
  */
 function getPrompt(args: string[]): string {
-  const promptIndex = args.indexOf("-prompt");
+  const promptIndex = args.indexOf('-prompt');
 
   if (promptIndex === -1) {
     throw new Error('请通过 -prompt 传入问题，例如：-prompt "你好"');
@@ -26,28 +17,55 @@ function getPrompt(args: string[]): string {
   const prompt = args[promptIndex + 1];
 
   if (!prompt) {
-    throw new Error("-prompt 后面不能是空内容。");
+    throw new Error('-prompt 后面不能是空内容。');
   }
 
   return prompt;
 }
 
 /**
- * 主函数，处理命令行参数并调用 ChatClient 发送问题
+ *  主函数，负责处理命令行参数、加载配置、与模型交互并打印结果。
+ * @returns 
  */
 async function main() {
+  // 从命令行参数中获取用户的问题
   const prompt = getPrompt(process.argv.slice(2));
+  // 加载配置
   const config = await loadConfig();
-  const client = new ChatClient(config);
+  const client = new ChatClient(config); // 创建 ChatClient 实例
 
-  console.log("AI 正在思考...\n");
+  console.log('AI 正在思考...\n');
 
-  const answer = await client.ask(prompt);
+  const firstMessage = await client.askWithTools(prompt); // 调用模型，获取第一个消息
+  const toolCall = firstMessage?.tool_calls?.[0];
+
+  if (!toolCall) {
+    console.log(`AI：${firstMessage?.content ?? '模型没有返回内容。'}`);
+    return;
+  }
+
+  if (toolCall.type !== 'function') {
+    throw new Error(`暂时不支持工具类型：${toolCall.type}`);
+  }
+
+  if (toolCall.function.name !== 'read_file') {
+    throw new Error(`暂时不支持工具：${toolCall.function.name}`);
+  }
+
+  console.log(`AI 想读文件：${toolCall.function.arguments}\n`);
+  console.log(`正在读取文件：${toolCall.function.arguments}`);
+
+  const fileContent = await readFileTool(toolCall.function.arguments);
+
+  const answer = await client.answerAfterReadFile(
+    prompt,
+    toolCall,
+    fileContent,
+  );
 
   console.log(`AI：${answer}`);
 }
 
-// 处理异常并退出进程
 main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
   console.error(`启动失败：${message}`);

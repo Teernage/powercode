@@ -1,12 +1,7 @@
+import { Agent } from './agent.js';
 import { ChatClient } from './chat.js';
 import { loadConfig } from './config.js';
-import { readFileTool } from './readFile.js';
 
-/**
- *  从命令行参数中获取用户的问题
- * @param args 命令行参数
- * @returns 用户的问题
- */
 function getPrompt(args: string[]): string {
   const promptIndex = args.indexOf('-prompt');
 
@@ -23,46 +18,15 @@ function getPrompt(args: string[]): string {
   return prompt;
 }
 
-/**
- *  主函数，负责处理命令行参数、加载配置、与模型交互并打印结果。
- * @returns 
- */
 async function main() {
-  // 从命令行参数中获取用户的问题
   const prompt = getPrompt(process.argv.slice(2));
-  // 加载配置
   const config = await loadConfig();
-  const client = new ChatClient(config); // 创建 ChatClient 实例
+  const client = new ChatClient(config);
+  const agent = new Agent(client);
 
   console.log('AI 正在思考...\n');
 
-  const firstMessage = await client.askWithTools(prompt); // 调用模型，获取第一个消息
-  const toolCall = firstMessage?.tool_calls?.[0];
-
-  if (!toolCall) {
-    console.log(`AI：${firstMessage?.content ?? '模型没有返回内容。'}`);
-    return;
-  }
-
-  if (toolCall.type !== 'function') {
-    throw new Error(`暂时不支持工具类型：${toolCall.type}`);
-  }
-
-  if (toolCall.function.name !== 'read_file') {
-    throw new Error(`暂时不支持工具：${toolCall.function.name}`);
-  }
-
-  console.log(`AI 想读文件：${toolCall.function.arguments}\n`);
-  console.log(`正在读取文件：${toolCall.function.arguments}`);
-
-  const fileContent = await readFileTool(toolCall.function.arguments);
-
-  const answer = await client.answerAfterReadFile(
-    prompt,
-    toolCall,
-    fileContent,
-  );
-
+  const answer = await agent.run(prompt);
   console.log(`AI：${answer}`);
 }
 

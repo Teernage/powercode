@@ -1,6 +1,12 @@
-import { Agent } from './agent.js';
-import { ChatClient } from './chat.js';
-import { loadConfig } from './config.js';
+import { resolve } from "node:path";
+import { Agent } from "./agent.js";
+import { ChatClient } from "./chat.js";
+import { loadConfig } from "./config.js";
+import { BashTool } from "./tools/bash.js";
+import { EditFileTool } from "./tools/edit-file.js";
+import { ReadFileTool } from "./tools/read-file.js";
+import { Registry } from "./tools/registry.js";
+import { WriteFileTool } from "./tools/write-file.js";
 
 function getPrompt(args: string[]): string {
   const promptIndex = args.indexOf('-prompt');
@@ -22,10 +28,17 @@ async function main() {
   const prompt = getPrompt(process.argv.slice(2));
   const config = await loadConfig();
   const client = new ChatClient(config);
-  const agent = new Agent(client);
+  const workDir = resolve(process.cwd());
+  const registry = new Registry();
 
-  console.log('AI 正在思考...\n');
+  registry.register(new ReadFileTool(workDir));
+  registry.register(new WriteFileTool(workDir));
+  registry.register(new EditFileTool(workDir));
+  registry.register(new BashTool(workDir));
 
+  const agent = new Agent(client, registry);
+
+  console.log("AI 正在思考...\n");
   const answer = await agent.run(prompt);
   console.log(`AI：${answer}`);
 }
@@ -35,3 +48,4 @@ main().catch((error: unknown) => {
   console.error(`启动失败：${message}`);
   process.exit(1);
 });
+

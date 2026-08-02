@@ -1,29 +1,24 @@
-import OpenAI from 'openai';
-import type { ProviderConfig } from './config.js';
-import { READ_FILE_TOOL } from './readFile.js';
+import OpenAI from "openai";
+import type { ProviderConfig } from "./config.js";
 
 export class ChatClient {
   private readonly client: OpenAI;
 
   constructor(private readonly config: ProviderConfig) {
     this.client = new OpenAI({
-      apiKey: config.apiKey, // 从环境变量中获取 API 密钥
-      baseURL: config.baseURL, // 从环境变量中获取 API 基础 URL
+      apiKey: config.apiKey,
+      baseURL: config.baseURL,
     });
   }
 
-  /**
-   *  完成对话
-   * @param messages 全部聊天记录
-   * @returns  模型回复的消息
-   */
   async complete(
     messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+    tools: OpenAI.Chat.Completions.ChatCompletionTool[],
   ) {
     const response = await this.client.chat.completions.create({
       model: this.config.model,
       messages,
-      tools: [READ_FILE_TOOL],
+      tools,
     });
 
     return response.choices[0]?.message;

@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
-import type { Tool } from "./types.js";
-import { resolveInWorkDir } from "./path.js";
+import type { Tool } from "./types.ts";
+import { resolveInWorkDir } from "./path.ts";
 
 /**
  *   解析编辑文件工具参数

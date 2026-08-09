@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import type { Tool } from "./types.js";
-import { resolveInWorkDir } from "./path.js";
+import type { Tool } from "./types.ts";
+import { resolveInWorkDir } from "./path.ts";
 
 /**
  *   解析写入文件工具参数

@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import type { Tool } from "./types.js";
+import type { Tool } from "./types.ts";
 
 
 const execFileAsync = promisify(execFile); // 异步执行文件

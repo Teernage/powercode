@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import type { Tool } from "./types.js";
+import type { Tool } from "./types.ts";
 
 export class Registry {
     // 工具注册表

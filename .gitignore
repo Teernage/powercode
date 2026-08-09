@@ -1,3 +1,5 @@
 node_modules
 dist
-provider.json
+.DS_Store
+/provider.json
+!demos/*/provider.json

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import type { Tool } from "./types.js";
-import { resolveInWorkDir } from "./path.js";
+import type { Tool } from "./types.ts";
+import { resolveInWorkDir } from "./path.ts";
 
 // 最大读取字节数
 const MAX_BYTES = 8_000;

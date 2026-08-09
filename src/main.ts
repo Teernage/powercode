@@ -1,31 +1,17 @@
+import { createInterface } from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
 import { resolve } from "node:path";
-import { Agent } from "./agent.js";
-import { ChatClient } from "./chat.js";
-import { loadConfig } from "./config.js";
-import { BashTool } from "./tools/bash.js";
-import { EditFileTool } from "./tools/edit-file.js";
-import { ReadFileTool } from "./tools/read-file.js";
-import { Registry } from "./tools/registry.js";
-import { WriteFileTool } from "./tools/write-file.js";
-
-function getPrompt(args: string[]): string {
-  const promptIndex = args.indexOf('-prompt');
-
-  if (promptIndex === -1) {
-    throw new Error('请通过 -prompt 传入问题，例如：-prompt "你好"');
-  }
-
-  const prompt = args[promptIndex + 1];
-
-  if (!prompt) {
-    throw new Error('-prompt 后面不能是空内容。');
-  }
-
-  return prompt;
-}
+import { Agent } from "./agent.ts";
+import { ChatClient } from "./chat.ts";
+import { loadConfig } from "./config.ts";
+import { Session } from "./context/session.ts";
+import { BashTool } from "./tools/bash.ts";
+import { EditFileTool } from "./tools/edit-file.ts";
+import { ReadFileTool } from "./tools/read-file.ts";
+import { Registry } from "./tools/registry.ts";
+import { WriteFileTool } from "./tools/write-file.ts";
 
 async function main() {
-  const prompt = getPrompt(process.argv.slice(2));
   const config = await loadConfig();
   const client = new ChatClient(config);
   const workDir = resolve(process.cwd());
@@ -36,11 +22,36 @@ async function main() {
   registry.register(new EditFileTool(workDir));
   registry.register(new BashTool(workDir));
 
-  const agent = new Agent(client, registry);
+  const session = new Session();
+  const agent = new Agent(client, registry, session);
 
-  console.log("AI 正在思考...\n");
-  const answer = await agent.run(prompt);
-  console.log(`AI：${answer}`);
+  const runPrompt = async (value: string) => {
+    console.log("AI 正在思考...\n");
+    const answer = await agent.run(value);
+    console.log(`AI：${answer}`);
+  };
+
+  const readline = createInterface({ input, output });
+
+  try {
+    console.log("已进入交互模式，输入 exit 或 quit 退出。\n");
+
+    while (true) {
+      const value = (await readline.question("> ")).trim();
+
+      if (!value) continue;
+      if (value === "exit" || value === "quit") break;
+
+      try {
+        await runPrompt(value);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`本轮执行失败：${message}`);
+      }
+    }
+  } finally {
+    readline.close();
+  }
 }
 
 main().catch((error: unknown) => {
@@ -48,4 +59,3 @@ main().catch((error: unknown) => {
   console.error(`启动失败：${message}`);
   process.exit(1);
 });
-

@@ -1,6 +1,6 @@
 {
   "protocol": "openai",
   "baseURL": "https://api.deepseek.com",
-  "apiKey": "sk-f4e7aac9216e468398e75646458e1342",
+  "apiKey": "你的api key",
   "model": "deepseek-v4-pro"
 }

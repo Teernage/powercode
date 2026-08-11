@@ -26,23 +26,23 @@ export async function loadConfig(): Promise<ProviderConfig> {
   const content = await readFile("provider.json", "utf8");
   const config = JSON.parse(content) as Partial<ProviderConfig>;
 
-if (
-  !config.baseURL ||
-  !config.apiKey ||
-  !config.model ||
-  typeof config.contextWindow !== "number" ||
-  !Number.isInteger(config.contextWindow) ||
-  config.contextWindow <= 0
-) {
-  throw new Error(
-    "provider.json 配置不完整，需要提供 baseURL、apiKey、model 和正整数 contextWindow。",
-  );
-}
+  if (
+    !config.baseURL ||
+    !config.apiKey ||
+    !config.model ||
+    typeof config.contextWindow !== "number" ||
+    !Number.isInteger(config.contextWindow) ||
+    config.contextWindow <= 0
+  ) {
+    throw new Error(
+      "provider.json 配置不完整，需要提供 baseURL、apiKey、model 和正整数 contextWindow。",
+    );
+  }
 
-return {
-  baseURL: config.baseURL,
-  apiKey: config.apiKey,
-  model: config.model,
-  contextWindow: config.contextWindow,
-};
+  return {
+    baseURL: config.baseURL,
+    apiKey: config.apiKey,
+    model: config.model,
+    contextWindow: config.contextWindow,
+  };
 }

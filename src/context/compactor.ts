@@ -21,8 +21,8 @@ export class Compactor {
   constructor(
     private readonly client: ChatClient, // 会话压缩器使用的 ChatClient 
     private readonly maxContextTokens: number, // 最大上下文 Token 数量
-    private readonly reserveTokens = 2_000, // 保留的 Token 数量
-    private readonly keepRecentTokens = 4_000, // 保留最近几条对话
+    private readonly reserveTokens = 16_384, // 给模型本轮回答预留空间
+    private readonly keepRecentTokens = 20_000, // 保留近期对话原文
   ) {}
 
   /**

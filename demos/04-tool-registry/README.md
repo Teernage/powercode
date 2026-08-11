@@ -2,15 +2,10 @@
 
 这是第四阶段：工具集合、统一注册和 Agent 的安全边界。
 
-## 配置
-
-打开当前目录下的 `provider.json`，填写自己的 API Key；`baseURL` 和 `model` 也可以按实际使用的模型服务调整。这个文件只是模板，填好后不要把包含真实 API Key 的版本再次分享。
-
 ## 运行
 
 ```bash
 cd /Users/xuzhenxin/Documents/harness工程/powercode/demos/04-tool-registry
-npm install
 npm run build
 npm start -- -prompt "创建 workspace/demo/hello.ts，让它输出 Hello, power-code，然后运行它"
 ```
@@ -36,6 +31,24 @@ npm start -- -prompt "创建 workspace/demo/hello.ts，让它输出 Hello, power
 
 - TypeScript + Node.js（ESM）
 - OpenAI 兼容 SDK（可对接 DeepSeek、OpenAI 等）
+
+## 📦 安装
+
+```bash
+npm install
+```
+
+## ⚙️ 配置
+
+在项目根目录创建 `provider.json`：
+
+```json
+{
+  "baseURL": "https://api.deepseek.com",
+  "apiKey": "你的 API Key",
+  "model": "deepseek-v4-flash"
+}
+```
 
 ## 🚀 使用
 

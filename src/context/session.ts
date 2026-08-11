@@ -57,7 +57,7 @@ export class Session {
     return this.usage === undefined ? undefined : { ...this.usage };
   }
 
-/**
+  /**
    * 保存最近一次 Token 用量
    * @param totalTokens 最近一次 Token 用量
    */

@@ -69,7 +69,7 @@ npm start -- -prompt "帮我看看这个项目结构"
 
 ## 📚 示例
 
-项目在 `demos/` 目录提供了 4 个完整示例：
+项目在 `demos/` 目录提供了 5 个完整示例：
 
 | 示例 | 说明 |
 |------|------|
@@ -77,6 +77,7 @@ npm start -- -prompt "帮我看看这个项目结构"
 | `02-read-file` | 读取文件示例 |
 | `03-agent-loop` | 完整的 Agent 循环示例 |
 | `04-tool-registry` | 工具注册机制示例 |
+| `05-session-compaction` | 会话记忆与上下文压缩示例 |
 
 运行示例：
 

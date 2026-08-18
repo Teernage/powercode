@@ -1,0 +1,16 @@
+{
+  "name": "todo-demo",
+  "version": "1.0.0",
+  "description": "小型待办命令行演示",
+  "type": "module",
+  "scripts": {
+    "start": "tsx ceshi.ts",
+    "build": "tsc ceshi.ts --outDir dist --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck --strict",
+    "run:js": "node dist/ceshi.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -25,7 +25,7 @@ npm start -- -prompt "创建 workspace/demo/hello.ts，让它输出 Hello, power
 - 在终端中与 AI 模型对话
 - 支持读取、创建/覆盖、编辑文件
 - 支持执行 shell 命令（构建、测试等）
-- 多轮工具调用，最多 8 轮自动执行
+- 多轮工具调用，最多 30 轮自动执行
 
 ## 🛠️ 技术栈
 

@@ -31,7 +31,9 @@ ${CYAN}可用命令:${RESET}
 
 function showList(): void {
   if (todos.length === 0) {
-    console.log(`${YELLOW}暂无待办事项，试试输入 "add 写周报" 添加一个。${RESET}`);
+    console.log(
+      `${YELLOW}暂无待办事项，试试输入 "add 写周报" 添加一个。${RESET}`,
+    );
     return;
   }
   console.log(`${CYAN}===== 待办列表 (共 ${todos.length} 条) =====${RESET}`);

@@ -116,46 +116,39 @@ async function main() {
       }
     }
 
-while (true) {
-  const value = (
-    await readline.question("> ")
-  ).trim();
+    while (true) {
+      const value = (await readline.question("> ")).trim();
 
-  if (!value) continue;
-  if (value === "exit" || value === "quit") {
-    break;
-  }
+      if (!value) continue;
+      if (value === "exit" || value === "quit") {
+        break;
+      }
 
-  if (value === "/plan") {
-    state.enterPlan();
-    console.log(
-      "已进入 Plan Mode，只能读取和搜索项目。",
-    );
-    continue;
-  }
+      if (value === "/plan") {
+        state.enterPlan();
+        console.log("已进入 Plan Mode，只能读取和搜索项目。");
+        continue;
+      }
 
-  if (value === "/code") {
-    state.enterCode();
-    console.log("已进入 Code Mode。");
-    continue;
-  }
+      if (value === "/code") {
+        state.enterCode();
+        console.log("已进入 Code Mode。");
+        continue;
+      }
 
-  if (value === "/status") {
-    printStatus();
-    continue;
-  }
+      if (value === "/status") {
+        printStatus();
+        continue;
+      }
 
-  try {
-    await runPrompt(value);
-    await reviewPendingPlan();
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : String(error);
-    console.error(`本轮执行失败：${message}`);
-  }
-}
+      try {
+        await runPrompt(value);
+        await reviewPendingPlan();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`本轮执行失败：${message}`);
+      }
+    }
   } finally {
     readline.close();
   }

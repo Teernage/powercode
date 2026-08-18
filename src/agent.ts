@@ -107,6 +107,10 @@ export class Agent {
   }
 
   async run(prompt: string): Promise<string> {
+    if (this.state.getStatus() === "waiting_for_approval") {
+      throw new Error("当前计划正在等待审批。");
+    }
+
     this.session.append({
       role: "user",
       content: prompt,
@@ -142,6 +146,8 @@ export class Agent {
       const toolCalls = message.tool_calls ?? [];
 
       if (toolCalls.length === 0) {
+        this.state.finishExecution();
+
         return message.content ?? "模型没有返回文本内容。";
       }
 

@@ -1,0 +1,6 @@
+{
+  "baseURL": "https://your-provider.example/v1",
+  "apiKey": "replace-locally",
+  "model": "your-model-name",
+  "contextWindow": 128000
+}

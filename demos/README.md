@@ -1,6 +1,6 @@
 # 往期文章 Demo
 
-这组目录对应 Agent 能力演进的五个代码阶段，每个阶段都整理为独立 Demo。
+这组目录对应 Agent 能力演进的六个代码阶段，每个阶段都整理为独立 Demo。
 
 | 阶段 | 目录 | 对应能力 | 现场问题 |
 | --- | --- | --- | --- |
@@ -9,6 +9,7 @@
 | 03 | `03-agent-loop` | 多轮 Agent Loop | `先读 README.md，再看看 package.json，告诉我这个项目怎么启动` |
 | 04 | `04-tool-registry` | Registry、多工具和安全边界 | `创建 workspace/demo/hello.ts，让它输出 Hello, power-code，然后运行它` |
 | 05 | `05-session-compaction` | Session 会话记忆与 Compactor 上下文压缩 | 连续追问，并运行 `node dist/demo-compaction.js` 观察压缩结果 |
+| 06 | `06-plan-mode` | Plan Mode、计划审批与独立任务清单 | 先制定计划，批准后按 `TODO.md` 执行 |
 
 ## 运行前准备
 
@@ -30,7 +31,7 @@ npm run build
 npm start -- -prompt "帮我看看这个项目结构"
 ```
 
-把路径和问题替换成上表中的其他阶段即可。现场演示时，建议提前把五组命令各跑一次，并保存终端截图作为备用。
+把路径和问题替换成上表中的其他阶段即可。现场演示时，建议提前把六组命令各跑一次，并保存终端截图作为备用。
 
 ## 阶段说明
 
@@ -39,3 +40,18 @@ npm start -- -prompt "帮我看看这个项目结构"
 - `03-agent-loop`：多轮 Agent Loop。
 - `04-tool-registry`：工具管理阶段，包含 `Registry`、`read_file`、`write_file`、`edit_file` 和 `bash`。
 - `05-session-compaction`：会话与上下文管理阶段，包含 `Session`、Token 用量记录、工作记忆构造和 `Compactor`。
+
+- `06-plan-mode`：第六篇完成版存档，包含只读规划、计划审批、按模式控制工具和独立任务目录。
+
+## Demo 06：先规划，再执行
+
+```bash
+cd demos/06-plan-mode
+npm ci
+# 填写本目录的 provider.json
+npm run build
+mkdir -p workspace/plan-demo
+npm start -- --plan -dir ./workspace/plan-demo
+```
+
+第 06 阶段使用交互终端输入任务；先提交计划，再根据审批菜单决定是否执行。详细配置与交互命令见 `06-plan-mode/README.md`。

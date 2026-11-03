@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "demo": "npm run build && node dist/demo-recovery.js"
   },
   "dependencies": {
     "openai": "^6.0.0"

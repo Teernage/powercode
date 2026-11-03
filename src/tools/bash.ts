@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { Tool } from "./types.ts";
-
+import { ToolExecutionError, type FailureKind } from '../context/recovery.ts';
 
 const execFileAsync = promisify(execFile); // 异步执行文件
 const TIMEOUT_MS = 30_000; // 30 秒超时
@@ -53,30 +53,44 @@ export class BashTool implements Tool {
     },
   };
 
-  constructor(private readonly workDir: string) {}
+  constructor(
+    private readonly workDir: string,
+    private readonly timeoutMs = TIMEOUT_MS,
+  ) {}
 
   /**
-   *  执行工具
-   * @param argumentsJson  工具参数 JSON 字符串
-   * @returns              工具执行结果
-   */
-  async execute(argumentsJson: string): Promise<string> {
-    const command = parseCommand(argumentsJson);
+ *  执行工具
+ * @param argumentsJson  工具参数 JSON 字符串
+ * @returns              工具执行结果
+ */
+async execute(argumentsJson: string): Promise<string> {
+  const command = parseCommand(argumentsJson);
 
-    // 执行命令
-      const { stdout, stderr } = await execFileAsync(
-        "bash",
-        ["-c", command],
-        {
-          cwd: this.workDir,
-          timeout: TIMEOUT_MS,
-          maxBuffer: MAX_BUFFER,
-        },
-      );
-
-
-    const output = [stdout, stderr].filter(Boolean).join("\n").trim();
-
-    return output || "命令执行成功，没有终端输出。";
+  try {
+    const { stdout, stderr } = await execFileAsync("bash", ["-c", command], {
+      cwd: this.workDir,
+      timeout: this.timeoutMs,
+      maxBuffer: MAX_BUFFER,
+    });
+    return [stdout, stderr].filter(Boolean).join("\n").trim()
+      || "命令执行成功，没有终端输出。";
+  } catch (error) {
+    const e = error as Error & {
+      code?: string | number; killed?: boolean; signal?: string;
+      stdout?: string; stderr?: string;
+    };
+    let kind: FailureKind = "command_failed";
+    if (e.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
+      kind = "output_limit";
+    } else if (e.killed) {
+      kind = "timeout";
+    }
+    const detail = [
+      `code=${e.code ?? "unknown"}; signal=${e.signal ?? "none"}`,
+      e.message, e.stdout, e.stderr,
+    ].filter(Boolean).join("\n");
+    throw new ToolExecutionError(kind, detail);
   }
+}
+
 }

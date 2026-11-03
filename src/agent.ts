@@ -4,6 +4,8 @@ import { Compactor } from "./context/compactor.ts";
 import type { Session } from "./context/session.ts";
 import { Registry } from "./tools/registry.ts";
 import { AgentState, formatPlan } from "./plan.ts";
+import { RecoveryManager } from './context/recovery.ts';
+import { runToolBatch } from './tool-runner.ts';
 
 const MAX_STEPS = 30;
 
@@ -11,6 +13,9 @@ const CORE_SYSTEM_PROMPT = `
 你是 power-code，一个研发助手。
 请优先读取真实文件；修改后主动运行命令验证结果；请使用中文回答。
 所有文件路径都相对于当前工作目录，不能操作工作目录之外的文件。
+工具失败后，结合原始日志和 Harness 恢复提示调整策略。
+超时、输出溢出或写入报错后，先检查进程和文件现状，不能假定操作完全没有生效。
+验证未通过时，不得把对应 TODO 标为完成；不能通过删除测试或绕过权限消除报错。
 `;
 
 const PLAN_MODE_PROMPT = `
@@ -110,88 +115,76 @@ export class Agent {
     if (this.state.getStatus() === "waiting_for_approval") {
       throw new Error("当前计划正在等待审批。");
     }
-
+  
     this.session.append({
       role: "user",
       content: prompt,
     });
-
+  
+    // 每次 run 使用独立计数；上下文压缩不会清空本次计数。
+    const recovery = new RecoveryManager();
+  
     for (let step = 1; step <= MAX_STEPS; step += 1) {
       const memory = await this.compactor.buildWorkingMemory(this.session);
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         {
           role: "system",
-         content: this.buildSystemPrompt(),
+          content: this.buildSystemPrompt(),
         },
         ...memory,
       ];
-
+  
       const allowedToolNames = this.getAllowedToolNames();
       const completion = await this.client.completeWithUsage(
         messages,
         this.registry.getDefinitions(allowedToolNames),
       );
       const message = completion.message;
-
+  
       if (!message) {
         throw new Error("模型没有返回消息。");
       }
-
+  
+      // 拒绝不支持的调用前，不把无法配对的 assistant 消息写入历史。
+      const toolCalls = message.tool_calls ?? [];
+      for (const call of toolCalls) {
+        if (call.type !== 'function') {
+          throw new Error(`暂时不支持工具类型：${call.type}`);
+        }
+      }
+  
       this.session.append(message);
-
+  
       if (completion.totalTokens !== undefined && completion.totalTokens > 0) {
         this.session.saveUsage(completion.totalTokens);
       }
-
-      const toolCalls = message.tool_calls ?? [];
-
+  
       if (toolCalls.length === 0) {
         this.state.finishExecution();
-
+  
         return message.content ?? "模型没有返回文本内容。";
       }
-
-      for (const toolCall of toolCalls) {
-        if (toolCall.type !== "function") {
-          throw new Error(`暂时不支持工具类型：${toolCall.type}`);
-        }
-
-        const name = toolCall.function.name;
-        console.log(`第 ${step} 轮：AI 调用 ${name}`);
-
-        let result: string;
-
-        try {
-          result = await this.registry.execute(
-            name,
-            toolCall.function.arguments,
-            allowedToolNames,
-          );
-          console.log(`✓ ${name} 执行完成\n`);
-        } catch (error) {
-          const reason = error instanceof Error ? error.message : String(error);
-          result = `工具执行失败：${reason}`;
-          console.log(`✗ ${result}\n`);
-        }
-
-        this.session.append({
-          role: "tool",
-          tool_call_id: toolCall.id,
-          content: result,
-        });
+  
+      const batch = await runToolBatch(
+        toolCalls, this.registry, allowedToolNames, recovery,
+      );
+      this.session.append(...batch.messages);
+      if (batch.stop) {
+        // 不调用 finishExecution：暂停不等于计划已完成。
+        return `本次运行已暂停。\n${batch.stopReason}\n请检查当前文件和未完成 TODO 后再继续。`;
       }
-
+  
       if (this.state.getStatus() === "waiting_for_approval") {
         const plan = this.state.getPendingPlan();
-
+  
         if (!plan) {
           throw new Error("计划状态异常。");
         }
-
+  
         return formatPlan(plan);
       }
     }
-
+  
     throw new Error(`执行超过 ${MAX_STEPS} 轮，已停止。`);
   }
 }
